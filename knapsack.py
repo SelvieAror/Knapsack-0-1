@@ -82,7 +82,7 @@ def brute(weight, value, capacity):
 
     return max_value, best_combination
 
-
+# louai sexy
 def dp_memory_check(n, capacity):
     rows = n + 1
     columns = capacity + 1
