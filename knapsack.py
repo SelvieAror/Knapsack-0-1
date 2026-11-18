@@ -46,7 +46,7 @@ def generate(n, level, seed):
 
     return weight, value, capacity
 
-
+#louai part
 def brute(weight, value, capacity):
     n = len(weight)
     max_value = 0
@@ -82,7 +82,41 @@ def brute(weight, value, capacity):
 
     return max_value, best_combination
 
-# louai sexy
+
+def backtracking(weight, value, capacity):
+    n = len(weight)
+    max_value = 0
+    best_combination = []
+    current_combination = []
+
+    def backtrack(i, current_weight, current_value):
+        nonlocal max_value, best_combination
+
+        # Prune only if capacity is exceeded
+        if current_weight > capacity:
+            return
+
+        # Update best solution found so far
+        if current_value > max_value:
+            max_value = current_value
+            best_combination = list(current_combination)
+
+        # Base case: checked all items
+        if i == n:
+            return
+
+        # Option 1: Include item i
+        current_combination.append(i)
+        backtrack(i + 1, current_weight + weight[i], current_value + value[i])
+        current_combination.pop()
+
+        # Option 2: Exclude item i
+        backtrack(i + 1, current_weight, current_value)
+
+    backtrack(0, 0, 0)
+    return max_value, best_combination
+
+
 def dp_memory_check(n, capacity):
     rows = n + 1
     columns = capacity + 1
@@ -261,7 +295,7 @@ if __name__ == "__main__":
     for level, sizes in LEVELS.items():
         print("LEVEL:", level.upper())
 
-        brute_stopped = False
+        backtrack_stopped = False
         dp_stopped = False
 
         for n in sizes:
@@ -281,34 +315,34 @@ if __name__ == "__main__":
                 print("Generation time:", generation_time)
 
                
-                if not brute_stopped:
+                if not backtrack_stopped:
 
-                    print("\nRunning brute force...")
+                    print("\nRunning back tracking...")
 
                     start = time.perf_counter()
 
-                    brute_answer = run_with_timeout(
-                        brute,
+                    backtrack_answer = run_with_timeout(
+                        backtracking,
                         (weight, value, capacity),
                         TIME_LIMIT
                     )
 
                     elapsed = time.perf_counter() - start
 
-                    if brute_answer == "TIMEOUT":
-                        print("Brute force: TIMEOUT")
-                        brute_stopped = True
+                    if backtrack_answer == "TIMEOUT":
+                        print("Back tracking: TIMEOUT")
+                        backtrack_stopped = True
 
-                    elif brute_answer == "ERROR":
-                        print("Brute force: ERROR")
+                    elif backtrack_answer == "ERROR":
+                        print("Back tracking: ERROR")
 
                     else:
-                        print("Brute force value:", brute_answer[0])
-                        print("Solution size:", len(brute_answer[1]))
+                        print("Back tracking value:", backtrack_answer[0])
+                        print("Solution size:", len(backtrack_answer[1]))
                         print("Time:", elapsed)
 
                 else:
-                    print("Brute force: skipped (previous timeout)")
+                    print("Back tracking: skipped (previous timeout)")
 
                
                 if not dp_stopped:
@@ -344,11 +378,11 @@ if __name__ == "__main__":
                     print("Dynamic programming: skipped (previous timeout)")
 
                
-                if (not brute_stopped or brute_answer != "TIMEOUT") and (
+                if (not backtrack_stopped or backtrack_answer != "TIMEOUT") and (
                     not dp_stopped or dp_answer != "TIMEOUT"
                 ):
-                    if isinstance(brute_answer, tuple) and isinstance(dp_answer, tuple):
-                        if brute_answer[0] == dp_answer[0]:
+                    if isinstance(backtrack_answer, tuple) and isinstance(dp_answer, tuple):
+                        if backtrack_answer[0] == dp_answer[0]:
                             print("Both algorithms returned the same value!")
                         else:
                             print("ERROR: Different answers!")
