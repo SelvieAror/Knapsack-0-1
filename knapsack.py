@@ -92,11 +92,9 @@ def backtracking(weight, value, capacity):
     def backtrack(i, current_weight, current_value):
         nonlocal max_value, best_combination
 
-        # Prune only if capacity is exceeded
         if current_weight > capacity:
             return
 
-        # Update best solution found so far
         if current_value > max_value:
             max_value = current_value
             best_combination = list(current_combination)
@@ -105,14 +103,12 @@ def backtracking(weight, value, capacity):
         if i == n:
             return
 
-        # Option 1: Include item i
         current_combination.append(i)
         backtrack(i + 1, current_weight + weight[i], current_value + value[i])
         current_combination.pop()
 
-        # Option 2: Exclude item i
         backtrack(i + 1, current_weight, current_value)
-
+    # Option 2: Exclude item i
     backtrack(0, 0, 0)
     return max_value, best_combination
 
@@ -279,8 +275,6 @@ def measure_time(function, args, timeout=1800):
 
         times.append(elapsed)
 
-        # If the first run takes 1 second or more,
-        # we don't need to repeat it.
         if i == 0 and elapsed >= 1:
             break
 
@@ -292,11 +286,31 @@ if __name__ == "__main__":
 
     TIME_LIMIT = 1800
 
+    ALGORITHMS = {
+        "1": ("Brute force", brute),
+        "brute": ("Brute force", brute),
+        "2": ("Back tracking", backtracking),
+        "backtracking": ("Back tracking", backtracking),
+        "3": ("Dynamic programming", dynamic_programming),
+        "dp": ("Dynamic programming", dynamic_programming),
+    }
+
+    print("\nAvailable algorithms:")
+    print("  1 / brute - Brute force")
+    print("  2 / backtracking - Back tracking")
+    print("  3 / dp - Dynamic programming")
+
+    while True:
+        choice = input("\nSelect algorithm to run: ").strip().lower()
+        if choice in ALGORITHMS:
+            algo_name, selected_algo = ALGORITHMS[choice]
+            break
+        print("Invalid choice.")
+
     for level, sizes in LEVELS.items():
         print("LEVEL:", level.upper())
 
-        backtrack_stopped = False
-        dp_stopped = False
+        algo_stopped = False
 
         for n in sizes:
 
@@ -315,74 +329,34 @@ if __name__ == "__main__":
                 print("Generation time:", generation_time)
 
                
-                if not backtrack_stopped:
+                if not algo_stopped:
 
-                    print("\nRunning back tracking...")
+                    print(f"\nRunning {algo_name.lower()}...")
 
                     start = time.perf_counter()
 
-                    backtrack_answer = run_with_timeout(
-                        backtracking,
+                    algo_answer = run_with_timeout(
+                        selected_algo,
                         (weight, value, capacity),
                         TIME_LIMIT
                     )
 
                     elapsed = time.perf_counter() - start
 
-                    if backtrack_answer == "TIMEOUT":
-                        print("Back tracking: TIMEOUT")
-                        backtrack_stopped = True
+                    if algo_answer == "TIMEOUT":
+                        print(f"{algo_name}: TIMEOUT")
+                        algo_stopped = True
 
-                    elif backtrack_answer == "ERROR":
-                        print("Back tracking: ERROR")
+                    elif algo_answer == "MEMOUT":
+                        print(f"{algo_name}: MEMOUT")
+
+                    elif algo_answer == "ERROR":
+                        print(f"{algo_name}: ERROR")
 
                     else:
-                        print("Back tracking value:", backtrack_answer[0])
-                        print("Solution size:", len(backtrack_answer[1]))
+                        print(f"{algo_name} value:", algo_answer[0])
+                        print("Solution size:", len(algo_answer[1]))
                         print("Time:", elapsed)
 
                 else:
-                    print("Back tracking: skipped (previous timeout)")
-
-               
-                if not dp_stopped:
-
-                    print("\nRunning dynamic programming...")
-
-                    start = time.perf_counter()
-
-                    dp_answer = run_with_timeout(
-                        dynamic_programming,
-                        (weight, value, capacity),
-                        TIME_LIMIT
-                    )
-
-                    elapsed = time.perf_counter() - start
-
-                    if dp_answer == "TIMEOUT":
-                        print("Dynamic programming: TIMEOUT")
-                        dp_stopped = True
-
-                    elif dp_answer == "MEMOUT":
-                        print("Dynamic programming: MEMOUT")
-
-                    elif dp_answer == "ERROR":
-                        print("Dynamic programming: ERROR")
-
-                    else:
-                        print("DP value:", dp_answer[0])
-                        print("Solution size:", len(dp_answer[1]))
-                        print("Time:", elapsed)
-
-                else:
-                    print("Dynamic programming: skipped (previous timeout)")
-
-               
-                if (not backtrack_stopped or backtrack_answer != "TIMEOUT") and (
-                    not dp_stopped or dp_answer != "TIMEOUT"
-                ):
-                    if isinstance(backtrack_answer, tuple) and isinstance(dp_answer, tuple):
-                        if backtrack_answer[0] == dp_answer[0]:
-                            print("Both algorithms returned the same value!")
-                        else:
-                            print("ERROR: Different answers!")
+                    print(f"{algo_name}: skipped (previous timeout)")
