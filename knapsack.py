@@ -6,7 +6,7 @@ import time
 import ctypes
 from ctypes import wintypes
 import statistics
-
+from bisect import bisect_right
 MEMORY_LIMIT_MB = 2000
 
 LEVELS = {
@@ -110,6 +110,84 @@ def backtracking(weight, value, capacity):
         backtrack(i + 1, current_weight, current_value)
     # Option 2: Exclude item i
     backtrack(0, 0, 0)
+    return max_value, best_combination
+
+def dnc(weight, value, capacity):
+
+    n = len(weight)
+    middle = n // 2
+
+    # Generate all possible subsets of one half
+    def generate(start, end):
+
+        subsets = [(0, 0, [])]
+
+        for i in range(start, end):
+
+            new_subsets = []
+
+            for w, v, combination in subsets:
+
+                new_weight = w + weight[i]
+                new_value = v + value[i]
+
+                if new_weight <= capacity:
+
+                    new_combination = combination + [i]
+
+                    new_subsets.append((
+                        new_weight,
+                        new_value,
+                        new_combination
+                    ))
+
+            subsets += new_subsets
+
+        return subsets
+
+    # Divide items into two halves
+    left = generate(0, middle)
+    right = generate(middle, n)
+
+    # Sort right subsets by weight
+    right.sort(key=lambda x: x[0])
+
+    # Remove dominated subsets
+    best_subsets = []
+    best_value = -1
+
+    for w, v, combination in right:
+
+        if v > best_value:
+
+            best_value = v
+            best_subsets.append((w, v, combination))
+
+    # Separate weights for binary search
+    weights = [w for w, v, c in best_subsets]
+
+    max_value = 0
+    best_combination = []
+
+    # Combine the two halves
+    for w, v, combination in left:
+
+        remaining = capacity - w
+
+        index = bisect_right(weights, remaining) - 1
+
+        if index >= 0:
+
+            right_weight, right_value, right_combination = best_subsets[index]
+
+            total_value = v + right_value
+
+            if total_value > max_value:
+
+                max_value = total_value
+
+                best_combination = combination + right_combination
+
     return max_value, best_combination
 
 
@@ -291,14 +369,14 @@ if __name__ == "__main__":
         "brute": ("Brute force", brute),
         "2": ("Back tracking", backtracking),
         "backtracking": ("Back tracking", backtracking),
-        "3": ("Dynamic programming", dynamic_programming),
-        "dp": ("Dynamic programming", dynamic_programming),
+        "3": ("Divide and conquer", dnc),
+        "dnc": ("Divide and conquer", dnc),
     }
 
     print("\nAvailable algorithms:")
     print("  1 / brute - Brute force")
     print("  2 / backtracking - Back tracking")
-    print("  3 / dp - Dynamic programming")
+    print("  3 / dnc - Divide and conquer")
 
     while True:
         choice = input("\nSelect algorithm to run: ").strip().lower()
